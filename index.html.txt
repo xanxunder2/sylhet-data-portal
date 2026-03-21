@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYLHET REGION DATA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes rotate-bg { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .neon-border-animate::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(from 0deg, transparent, #00f2fe, #7a00ff, transparent 60%);
+            animation: rotate-bg 3.5s linear infinite; z-index: -1;
+        }
+        .glass-effect { background: rgba(10, 15, 28, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        /* Unique Animated Selector */
+        .selector-container {
+            display: flex; background: #0c1220; padding: 5px; border-radius: 20px;
+            position: relative; border: 1px solid #1e293b;
+        }
+        .selector-item {
+            flex: 1; text-align: center; padding: 12px 0; font-size: 10px; font-weight: 900;
+            color: #4b5563; z-index: 10; cursor: pointer; transition: color 0.3s; text-transform: uppercase;
+        }
+        .selector-item.active { color: #fff; }
+        .selector-bg {
+            position: absolute; top: 5px; left: 5px; width: calc(33.33% - 7px); height: calc(100% - 10px);
+            background: linear-gradient(90deg, #00f2fe, #7a00ff); border-radius: 15px;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 1;
+        }
+        
+        #custom-modal { transition: all 0.3s ease; visibility: hidden; opacity: 0; }
+        #custom-modal.active { visibility: visible; opacity: 1; }
+        #toast { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translateY(20px); opacity: 0; }
+        #toast.show { opacity: 1; transform: translateY(0px); }
+    </style>
+</head>
+<body class="bg-[#02050a] text-gray-200 min-h-screen flex flex-col items-center p-4 font-sans selection:bg-cyan-500">
+
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-[#02050a] flex items-center justify-center p-4">
+        <div class="relative p-[2px] rounded-[2rem] overflow-hidden neon-border-animate w-full max-w-xs shadow-2xl">
+            <div class="bg-[#0c1220] rounded-[1.9rem] p-9 relative z-10 text-center">
+                <div class="text-3xl mb-4">🔐</div>
+                <h2 class="text-xl font-black text-white italic uppercase tracking-tighter mb-6">Security Portal</h2>
+                <input type="password" id="pin-input" placeholder="Enter PIN" class="w-full bg-[#161e2d] border border-gray-800 rounded-xl px-4 py-4 text-center focus:border-cyan-500 outline-none text-white font-bold tracking-[0.5em] mb-6 shadow-inner">
+                <button onclick="login()" class="w-full bg-cyan-600 text-white font-black py-4 rounded-xl uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-lg">Authenticate</button>
+                <p id="error-msg" class="text-red-500 text-[10px] mt-4 font-bold uppercase hidden">Invalid Access Code!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content" style="display: none;" class="w-full max-w-md flex flex-col items-center pb-20">
+        <div class="text-center mb-6 pt-4">
+            <h1 class="text-3xl font-black tracking-tighter bg-gradient-to-r from-cyan-400 via-white to-purple-500 bg-clip-text text-transparent italic uppercase">Sylhet North Axiata</h1>
+            <p id="station-info" class="text-[9px] text-gray-500 tracking-[0.4em] uppercase font-bold mt-1 italic">STATION: ---</p>
+        </div>
+
+        <div class="relative w-full p-[2px] rounded-[3rem] overflow-hidden neon-border-animate shadow-2xl mb-8">
+            <div class="glass-effect rounded-[2.9rem] p-8 relative z-10">
+                <div id="setup-screen" class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-cyan-500 uppercase tracking-widest mb-3 ml-1 italic">Gender Selection</label>
+                        <div class="selector-container">
+                            <div class="selector-bg" id="sel-bg"></div>
+                            <div class="selector-item active" onclick="setGender(0, 'random')">Random</div>
+                            <div class="selector-item" onclick="setGender(1, 'male')">Male</div>
+                            <div class="selector-item" onclick="setGender(2, 'female')">Female</div>
+                        </div>
+                        <input type="hidden" id="gender-val" value="random">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-cyan-500 uppercase tracking-widest mb-3 ml-1 italic">Batch Quantity</label>
+                        <input type="number" id="quantity" value="10" class="w-full bg-[#161e2d] border border-gray-800 rounded-2xl px-6 py-5 text-sm font-bold focus:border-cyan-500 outline-none text-white">
+                    </div>
+                    <button onclick="startGeneration()" class="w-full bg-white text-black font-black py-5 rounded-2xl uppercase tracking-[0.2em] text-sm active:scale-95 shadow-xl transition-all">Start Boom</button>
+                </div>
+
+                <div id="main-area" style="display: none;" class="space-y-4">
+                    <div class="flex justify-between items-center text-[9px] font-black text-gray-500 mb-4 uppercase italic">
+                        <span id="count-tag" class="bg-cyan-950/50 text-cyan-400 px-3 py-1 rounded-full border border-cyan-900/50">UNIT: 0 / 0</span>
+                        <span>STATUS: <span class="text-green-500 italic">SECURE</span></span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="space-y-1">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold ml-1 italic">Customer Name</span>
+                            <div class="flex gap-2">
+                                <div id="name-val" class="flex-grow bg-[#0c1220] border border-gray-800 px-5 py-4 rounded-2xl font-bold text-lg text-white italic">--</div>
+                                <button onclick="copyText('name-val')" class="bg-[#161e2d] text-cyan-400 w-14 rounded-2xl flex items-center justify-center active:bg-cyan-500 active:text-black">📋</button>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold ml-1 italic">Customer Number</span>
+                            <div class="flex gap-2">
+                                <div id="num-val" class="flex-grow bg-[#0c1220] border border-gray-800 px-5 py-4 rounded-2xl font-mono text-xl text-yellow-500 font-bold tracking-widest">--</div>
+                                <button onclick="copyText('num-val')" class="bg-[#161e2d] text-yellow-400 w-14 rounded-2xl flex items-center justify-center active:bg-yellow-500 active:text-black">📋</button>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[9px] text-cyan-600 uppercase font-bold ml-1 italic font-black">DOBS</span>
+                            <div class="flex gap-2">
+                                <div id="dobs-val" class="flex-grow bg-cyan-950/10 border border-cyan-900/30 px-5 py-4 rounded-2xl font-mono text-xl text-cyan-400 font-bold italic tracking-widest">--</div>
+                                <button onclick="copyText('dobs-val')" class="bg-cyan-900/50 text-cyan-400 w-14 rounded-2xl flex items-center justify-center active:bg-cyan-400 active:text-black">📋</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-6">
+                        <button onclick="goHome()" class="bg-[#161e2d] text-gray-500 font-black py-4 rounded-2xl border border-gray-800 uppercase text-[10px] tracking-widest">Settings</button>
+                        <button onclick="nextData()" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest shadow-xl active:scale-95">Forward Unit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full bg-[#0c1220] rounded-[2.5rem] border border-gray-800 p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xs font-black text-cyan-400 uppercase italic tracking-widest">Database Logs</h3>
+                <div class="flex gap-2">
+                    <button onclick="downloadHistory()" class="text-cyan-500 bg-cyan-950/20 px-3 py-2 rounded-xl border border-cyan-900/30 text-[9px] font-black">📥 DOWNLOAD</button>
+                    <button onclick="openModal()" class="text-red-500 bg-red-950/20 px-3 py-2 rounded-xl border border-red-900/30 text-[9px] font-black">🗑️ CLEAR</button>
+                </div>
+            </div>
+            <div id="history-list" class="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-1"></div>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm p-6">
+        <div class="bg-[#0c1220] border border-gray-800 w-full max-w-xs rounded-[2.5rem] p-8 text-center">
+            <h3 class="text-white font-black uppercase mb-2 italic tracking-widest">Reset History?</h3>
+            <p class="text-gray-500 text-[9px] mb-8 uppercase font-bold italic">All records will be permanently erased.</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 bg-[#161e2d] text-gray-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                <button onclick="confirmClearHistory()" class="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-red-900/40">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-12 bg-white text-black px-12 py-4 rounded-3xl font-black text-[10px] shadow-2xl uppercase tracking-[0.2em] pointer-events-none z-[9999]">Copied!</div>
+
+    <script>
+        const pinDB = {
+            "3366": { station: "Khadimnagar_Sylhet (RFO)", num: "01605434520" },
+            "5566": { station: "Khadimnagar_Sylhet (Agent)", num: "01847967258" },
+            "6677": { station: "Tultikar_Sylhet (RFO)", num: "01811809191" },
+            "1472": { station: "Tultikar_Sylhet (Agent)", num: "01848770906" },
+            "8800": { station: "Ward No-08_Sylhet [RFO]", num: "01627376666" }
+        };
+
+        let activeUser = null;
+        let historyData = JSON.parse(localStorage.getItem('robi_v10_final')) || [];
+        let sessionData = [];
+        let currentIndex = 0;
+
+        function login() {
+            const pin = document.getElementById('pin-input').value;
+            if(pinDB[pin]) {
+                activeUser = pinDB[pin];
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+                document.getElementById('station-info').innerText = `RSSP_${activeUser.station}`;
+                renderHistory();
+            } else {
+                document.getElementById('error-msg').classList.remove('hidden');
+                setTimeout(() => document.getElementById('error-msg').classList.add('hidden'), 2000);
+            }
+        }
+
+        // Animated Gender Selector Logic
+        function setGender(index, val) {
+            const items = document.querySelectorAll('.selector-item');
+            const bg = document.getElementById('sel-bg');
+            items.forEach(i => i.classList.remove('active'));
+            items[index].classList.add('active');
+            bg.style.transform = `translateX(${index * 100}%)`;
+            document.getElementById('gender-val').value = val;
+        }
+
+        const nameData = {
+            male: ["Abir", "Adnan", "Ahsan", "Akash", "Anik", "Ariyan", "Arman", "Habib", "Hasib", "Himel", "Hriday", "Imtiaz", "Mehedi", "Mehrab", "Naim", "Niloy", "Rahul", "Rakib", "Rifat", "Rohan", "Sabbir", "Sakib", "Siam", "Sifat", "Tahsin", "Tamim", "Tanvir", "Zahid"],
+            female: ["Adrika", "Ahana", "Anannya", "Anisha", "Arisha", "Bristi", "Diya", "Farhana", "Fariha", "Hiya", "Israt", "Jarin", "Lamia", "Maisha", "Maya", "Meghla", "Mithila", "Mou", "Nusrat", "Raisa", "Ruhi", "Saima", "Sanjida", "Snigdha", "Subah", "Suraiya", "Tania", "Tasnim", "Tithi", "Trisha"]
+        };
+
+        function startGeneration() {
+            const mode = document.getElementById('gender-val').value;
+            const qty = parseInt(document.getElementById('quantity').value) || 1;
+            sessionData = []; currentIndex = 0;
+            for(let i=0; i<qty; i++) {
+                let gender = mode === 'random' ? (Math.random() > 0.5 ? 'male' : 'female') : mode;
+                const randomPhone = "01" + ["8", "6"][Math.floor(Math.random() * 2)] + (Math.floor(Math.random() * 6) + 4) + Math.floor(1000000 + Math.random() * 9000000).toString();
+                const name = nameData[gender][Math.floor(Math.random() * nameData[gender].length)];
+                sessionData.push({ id: Date.now() + Math.random(), name, num: randomPhone });
+            }
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('main-area').style.display = 'block';
+            updateUI();
+        }
+
+        function updateUI() {
+            const item = sessionData[currentIndex];
+            document.getElementById('count-tag').innerText = `UNIT: ${currentIndex + 1} / ${sessionData.length}`;
+            document.getElementById('name-val').innerText = item.name;
+            document.getElementById('num-val').innerText = item.num;
+            document.getElementById('dobs-val').innerText = activeUser.num;
+
+            if(!historyData.some(h => h.num === item.num)) {
+                historyData.unshift({...item});
+                localStorage.setItem('robi_v10_final', JSON.stringify(historyData.slice(0, 500)));
+                renderHistory();
+            }
+        }
+y
+        function downloadHistory() {
+            if (historyData.length === 0) return showToast("Empty Database!");
+            let content = "--- ROBI ELITE DATABASE ---\n\n";
+            historyData.forEach((i, idx) => content += `${idx+1}. ${i.name} -> ${i.num}\n`);
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `elite_data_${Date.now()}.txt`;
+            a.click();
+            showToast("📥 Exported Successfully");
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = historyData.length === 0 ? `<p class="text-center text-gray-800 py-10 text-[9px] font-black uppercase tracking-widest">No Log Entries</p>` : 
+            historyData.map(item => `
+                <div class="bg-[#161e2d] border border-gray-800 p-4 rounded-2xl flex justify-between items-center mb-2 group">
+                    <div>
+                        <div class="text-[11px] font-black uppercase text-white">${item.name}</div>
+                        <div class="text-[10px] font-mono text-yellow-500 font-bold">${item.num}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="copyRaw('${item.num}')" class="p-2 bg-[#0c1220] rounded-xl text-gray-500 active:text-cyan-500 transition-all">📋</button>
+                        <button onclick="deleteSingle(${item.id})" class="p-2 bg-[#0c1220] rounded-xl text-red-900 group-hover:text-red-500">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openModal() { document.getElementById('custom-modal').classList.add('active'); }
+        function closeModal() { document.getElementById('custom-modal').classList.remove('active'); }
+        function confirmClearHistory() {
+            historyData = []; localStorage.removeItem('robi_v10_final');
+            renderHistory(); closeModal(); showToast("🔥 Data Erased");
+        }
+        function deleteSingle(id) {
+            historyData = historyData.filter(h => h.id !== id);
+            localStorage.setItem('robi_v10_final', JSON.stringify(historyData));
+            renderHistory();
+        }
+
+        function nextData() {
+            if (currentIndex < sessionData.length - 1) { currentIndex++; updateUI(); }
+            else { showToast("✅ BATCH COMPLETED"); goHome(); }
+        }
+        function goHome() {
+            document.getElementById('setup-screen').style.display = 'block';
+            document.getElementById('main-area').style.display = 'none';
+        }
+        function copyRaw(text) { navigator.clipboard.writeText(text); showToast(); }
+        function copyText(id) { navigator.clipboard.writeText(document.getElementById(id).innerText); showToast(); }
+        function showToast(msg = "Copied!") {
+            const t = document.getElementById('toast'); t.innerText = msg;
+            t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000);
+        }
+        document.getElementById('pin-input').addEventListener('keyup', (e) => { if(e.key === 'Enter') login(); });
+    </script>
+</body>
+</html>
